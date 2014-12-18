@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<splunk-conf>
+<host>graphspl301p.prod.ch3.s.com</host>
+<port>8089</port>
+<user>wli001</user>
+<password>pwd1pwd1</password>
+<search-name>s_passcode</search-name>
+<search-keywords>passcode-keyword</search-keywords>
+<search-time>earliest 1d</search-time>
+<search-stats>source</search-stats>
+<search-limit>12</search-limit>
+</splunk-conf>
