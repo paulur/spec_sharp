@@ -8,6 +8,7 @@ import splunklib.client as client
 from spec.sharp.config.config_builder import ConfigBuilder
 from spec.sharp.CONST import CONST
 from time import sleep
+
 import splunklib.results as results
 
 class SplunkService(object):
@@ -40,8 +41,24 @@ class SplunkService(object):
        
     def search(self, search_name='', search_string=''):
         #do search_example
-        saved_search = self.service.saved_searches[search_name]
-        print "search_example name: %s \nsearch string: %s\n----" % (saved_search.name, saved_search.content.search)
+        saved_searches = self.service.saved_searches
+        try: 
+            saved_search        = saved_searches[search_name]
+            save_search_string  = saved_search.content.search
+            if search_string != '' and search_string != save_search_string: 
+                print "update the saved search %s with a new search string" % search_name
+                kwargs = {"search" : search_string}
+                saved_search.update(**kwargs).refresh()
+            else:
+                print "search with %s" % search_name
+        except KeyError:
+            print "no search with name %s is found." % search_name
+            if search_string:
+                saved_search = saved_searches.create(search_name, search_string)
+            else:
+                raise Exception("!!!search string is needed!!!")
+                            
+        print "line 59; search_example name: %s \tsearch string: %s\n----" % (saved_search.name, saved_search.content.search)
         job = saved_search.dispatch()
         
         while True:
@@ -51,7 +68,7 @@ class SplunkService(object):
             
         for result in results.ResultsReader(job.results()):
             print result["_raw"]
-    
+        print "search done."
 # print 'splunk service search_example:\n'
 service = SplunkService(CONST.KEYWORD_SERACH_CONFIG)
-service.search("tmp")      
+service.search("tmpsd", "password | head 10")
