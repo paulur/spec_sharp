@@ -22,7 +22,18 @@ class KeywordSearchConfig(object):
         self.s_keywords = s_keywords
         self.s_time     = s_time
         self.s_stats    = s_stats
-        self.s_limit    = s_limit 
+        self.s_limit    = s_limit    
+            
+    def construct_search_string(self):
+        s_string = format("%s") % (self.s_keywords)
+        if self.s_time:
+            s_string += format("%s") % self.s_time
+        if self.s_stats:
+            s_string += format("%s") % self.s_stats
+        if self.s_limit:
+            s_string += format(" | %s") % self.s_limit
+            
+        return s_string
         
     def __str__(self):
         return 'server: ' + self.host + ':' + self.port + ', user: ' + self.user + \
@@ -50,34 +61,33 @@ class ConfigBuilder(object):
     def build_keyword_search_config(self):
         tree        = ET.parse(self.config_file)
         root        = tree.getroot()    
-        config      = KeywordSearchConfig()
             
         for child in root:
             tag     = child.tag
             text    = child.text
             
             if tag == 'host':
-                config.host = text
+                host = text
             elif tag == 'port':
-                config.port  = text
+                port  = text
             elif tag == 'user':
-                config.user  = text
+                user  = text
             elif tag == 'password':
-                config.password  = text
+                password  = text
             elif tag == 'search-name':
-                config.s_name = text
+                s_name = text
             elif tag == 'search-keywords':
-                config.s_keywords = text
+                s_keywords = text
             elif tag == 'search-time':
-                config.s_time = text
+                s_time = text
             elif tag == 'search-stats':
-                config.s_stats = text
+                s_stats = text
             elif tag == 'search-limit':
-                config.s_limit  = text
+                s_limit  = text
             else :
                 '''do nothing'''                
             
-        return config
+        return KeywordSearchConfig(host, port, user, password, s_name, s_keywords, s_time, s_stats, s_limit)
     
     def main(self):
         print 'hi: config'
