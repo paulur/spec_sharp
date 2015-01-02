@@ -3,18 +3,24 @@ Created on Dec 16, 2014
 
 @author: paul
 '''
+import re
+import os.path
+from time import sleep
+
 import splunklib.client as client
+import splunklib.results as results
 
 from spec.sharp.config.config_builder import ConfigBuilder
 from spec.sharp.CONST import CONST
-from time import sleep
 
-import splunklib.results as results
 
 class SplunkService(object):
     '''
     classdocs
     '''
+    urls = []
+    log_entries = []
+    
     '''
         config: the config file name
     '''
@@ -32,23 +38,23 @@ class SplunkService(object):
 #         Print installed apps to the console to verify login
 #         for app in service.apps: 
 #             print 'app:\t' + app.name
-        
-    def search_by_config(self):
-        self.search(self.config.s_name, self.config.construct_search_string())   
-    
-    def search_by_name(self, search_name):
+    def search_by_name(self, func, search_name):
         saved_searches = self.service.saved_searches
         saved_search   = saved_searches[search_name]
         job = saved_search.dispatch()
-        
+         
         while True:
             if job.is_ready():
                 break
             sleep (2)
-            
-        self.display_result(job)
-            
-    def search(self, search_name, search_string):
+             
+        func(job)
+        print "search done"
+        
+    def search_by_config(self, process_result=''):
+        self.search(self.config.s_name, self.config.construct_search_string(), process_result)   
+                
+    def search(self, search_name, search_string, process_result):
         saved_searches = self.service.saved_searches
         try: 
             saved_search        = saved_searches[search_name]
@@ -70,8 +76,19 @@ class SplunkService(object):
             if job.is_ready():
                 break
             sleep (2)
+            
+        for result in results.ResultsReader(job.results()):
+            if isinstance(result, dict):
+#                 print "Results: %s" % result
+                print "Results raw: %s" % result['_raw']
+                if (process_result):
+#                     print "do-traverse-func:"
+                    process_result(result)
+            elif isinstance(result, results.Message):
+                print "Not Traverse Message: %s" % result
+        print "search done"
            
-        self.display_result(job)
+#         self.display_result(job)
 #         
 #         for result in results.ResultsReader(job.results()):
 #             if isinstance(result, dict):
@@ -104,14 +121,39 @@ class SplunkService(object):
     def display_result(self, job):
         for result in results.ResultsReader(job.results()):
             if isinstance(result, dict):
+#                 print "Results: %s" % result
                 print "Results raw: %s" % result['_raw']
             elif isinstance(result, results.Message):
-                print "Message: %s" % result
+                print "Message: %s" % result           
+                       
+    
+    
+    def create_urls_entries_files(self):
+        self.urls    = []
+        self.log_entries = []
+        self.search_by_config(self.process_web_log_entry)
+        f_urls  = open(CONST.WEBLOG_URLS, "w")
+        for u in service.urls:
+            f_urls.write("%s\n" % u)
+        self.urls    = []
+        f_urls.close()
+         
+        f_log_entries = open(CONST.WEBLOG_ENTRIES, "w")
+        for e in service.log_entries:
+            f_log_entries.write("%s\n" % e)
+        self.log_entries = []   
+        f_log_entries.close()
+
+    def process_web_log_entry(self, result):
+        log_entry = result['_raw']
+        self.log_entries.append(log_entry)
         
+        url = re.findall('"([^"]*)"', log_entry)[0]
+        self.urls.append(url.split(' ')[0] + ' ' + url.split(' ')[1])
+         
 service = SplunkService(CONST.KEYWORD_SERACH_CONFIG)
-# service.search_by_name("OSSEC - Top Reporting Hosts")
-# service.search("tmp", "password")
-service.search_by_config()
+service.create_urls_entries_files()
+# service.search_by_config()
 # service.display_result(search_job)
 # service.delete_search("tmp")
 # service.list_saved_search()
