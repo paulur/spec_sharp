@@ -3,7 +3,19 @@ Created on Jan 2, 2015
 
 @author: paul
 '''
-from zeitgeist.datamodel import parents
+from httplib import REQUEST_ENTITY_TOO_LARGE
+
+class URLParser(object):
+    request_url_tokens = []
+    
+    def __init__(self, request_url_string):
+        self.request_url_tokens = self.parse_url(request_url_string)
+        
+    def parse_url(self, request_url_string):
+        '''
+        tokenize a url string into tokens
+        :request_url_string: request method with uri. for example, "GET /oldlink?itemId=EST-14&JSESSIONID=SD6SL7FF7ADFF53113"
+        '''
 
 class LayerdGraphNode(object):
     '''
@@ -21,10 +33,33 @@ class LayerdGraphNode(object):
         self.count      = count
         self.parents    = parents
         self.children   = children
+
+class LayeredGraphRoot(object):
+        def __init__(self, children=[]):
+            '''
+            Constructor
+            '''
+            self.label      = 'root'
+            self.layer_id   = 0
+            self.count      = 1
+            self.parents    = None
+            self.children   = children
+    
+class LayeredGraphHead(object):
+        def __init__(self, label, layer_id, count, root, children=[]):
+            '''
+            Constructor
+            '''
+            self.label      = 'root'
+            self.layer_id   = 1
+            self.count      = 0
+            self.parents    = root
+            self.children   = children
         
 class URLLayeredGraph(object):
-    def __init__(self, method):
-        self.root = LayerdGraphNode(method, 0)
+    root = LayeredGraphRoot()
+    
+    def __init__(self):
         self.current_layer  = 0
         self.current_list = [self.root]
         self.graph = [self.current_list]
