@@ -4,7 +4,6 @@ Created on Dec 16, 2014
 @author: paul
 '''
 import re
-import os.path
 from time import sleep
 
 import splunklib.client as client
