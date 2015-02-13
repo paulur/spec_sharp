@@ -8,7 +8,7 @@ class CONST(object):
     '''
     constants used in this application
     '''
-    ROOT_DIR                = "/home/paul/projects/spec_sharp/"
-    KEYWORD_SERACH_CONFIG   = ROOT_DIR + "keyword-search-config.xml"
+    ROOT_DIR                = "C:\\Users\\wli001\\git\\spec_sharp\\"
+    KEYWORD_SERACH_CONFIG   = ROOT_DIR + "keyword_search-config.xml"
     WEBLOG_ENTRIES          = ROOT_DIR + "weblog-entries.txt"
     WEBLOG_URLS             = ROOT_DIR + "weblog-urls.txt"

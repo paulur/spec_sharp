@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<splunk-conf>    
+   <host>graphspl301p.prod.ch3.s.com</host>
+    <port>8089</port>
+    <user>wli001</user>
+    <password>abcd2015</password>
+    <search-name>access-log-search</search-name>
+    <search-stats></search-stats>
+    <search-time>earliest=-30m</search-time>
+    <search-limit></search-limit>   
+    <search-keywords>host="web*p.prod.ch*.s.com"  source="/logs/ihs/sears2/2443/access"</search-keywords>
+ 
+ <!--  
+    <host>localhost</host>
+    <port>8089</port>
+    <user>admin</user>
+    <password>password</password>
+    <search-name>Test Search 0</search-name>
+    <search-keywords>method=*</search-keywords>
+    <search-stats></search-stats>
+    <search-time></search-time>
+    <search-limit>head 111</search-limit>   
+ -->
+</splunk-conf>

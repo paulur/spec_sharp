@@ -1,0 +1,13 @@
+1. The Layered Graph of URLs
+The URLs of a Web site are modeled by an acycled directed graph (i.e., layered graph)
+
+- A url is tokenized by HTTP special chars specified by HTTP protocol (http://www.w3.org/Protocols/HTTP/1.0/spec.html)
+						"(" | ")" | "<" | ">" | "@"
+                      	| "," | ";" | ":" | "\" | <">
+                      	| "/" | "[" | "]" | "?" | "="
+                   		| "{" | "}" | SP | HT
+- Each token is represented by a node in the layered graph
+- The sequence of tokens of a URL consists of a path in the order of appearance
+
+2. The MetaModel
+             

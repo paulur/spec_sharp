@@ -35,7 +35,7 @@ class SplunkService(object):
                             password    = self.config.password)
 
 #         Print installed apps to the console to verify login
-#         for app in service.apps: 
+#         for app in self.service.apps: 
 #             print 'app:\t' + app.name
     def search_by_name(self, func, search_name):
         saved_searches = self.service.saved_searches
@@ -68,7 +68,7 @@ class SplunkService(object):
             print "no search with name '%s' is found." % search_name
             saved_search = saved_searches.create(search_name, search_string)
                             
-        print "line 59; search name: %s.\tsearch string: %s\n----" % (saved_search.name, saved_search.content.search)
+        print "search name: %s.\tsearch string: %s\n----" % (saved_search.name, saved_search.content.search)
         job = saved_search.dispatch()
         
         while True:
@@ -76,10 +76,10 @@ class SplunkService(object):
                 break
             sleep (2)
             
-        for result in results.ResultsReader(job.results()):
+        for result in results.ResultsReader(job.results(count=0)):
             if isinstance(result, dict):
-#                 print "Results: %s" % result
-                print "Results raw: %s" % result['_raw']
+#                 print "Results raw: %s" % result['_raw']
+                print '.'
                 if (process_result):
 #                     print "do-traverse-func:"
                     process_result(result)

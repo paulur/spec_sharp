@@ -25,11 +25,11 @@ class KeywordSearchConfig(object):
         self.s_limit    = s_limit    
             
     def construct_search_string(self):
-        s_string = format("%s") % (self.s_keywords)
+        s_string = format(" %s ") % (self.s_keywords)
         if self.s_time:
-            s_string += format("%s") % self.s_time
+            s_string += format(" %s ") % self.s_time
         if self.s_stats:
-            s_string += format("%s") % self.s_stats
+            s_string += format(" %s ") % self.s_stats
         if self.s_limit:
             s_string += format(" | %s") % self.s_limit
             

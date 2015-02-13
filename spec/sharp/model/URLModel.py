@@ -17,29 +17,48 @@ class AccessURLModel(object):
         Constructor
         '''
         self.method, url    = request.split( )
-        self.path, query    = url.split("?", 1)
-        para_value_pairs    = query.split("&")
+        if "?" not in url:
+            self.path = url
+            self.query = ''            
+        else:
+            self.path, self.query = url.split("?", 1)
+        
+            
+        param_value_pairs    = self.query.split("&")
         
         self.para_dict   = OrderedDict()
-        for p in para_value_pairs:
-            para, value = p.split("=")
-            self.para_dict[para.strip()]=value.strip()
+        for p in param_value_pairs:
+            if "=" not in p: continue
+            print '\np:' + p
+            param, value = p.split("=", 1)
+            self.para_dict[param.strip()]=value.strip()
             
     def to_string(self):
         print self.method
         print self.path
         print self.para_dict
         
-    def get_para_names(self):
+    def get_param_names(self):
         return self.para_dict.keys()
            
+class URLProcessor(object):    
+    def get_access_url_params(self, access_log): 
+        with open(access_log) as f:
+            lines = f.readlines()
+        
+        log_params_file = access_log + ".params"
+        f_params  = open(log_params_file, "w")    
+        try: 
+            for l in lines:         
+                aum = AccessURLModel(l)
+                f_params.write('\n' + aum.method + '\t' + aum.path + ': ')
+                for pn in aum.get_param_names():
+                     f_params.write(pn + ', ')
+        finally:
+            f_params.close()
+            print 'params-written to: ' + log_params_file
 
-log_file = CONST.WEBLOG_URLS
-with open(log_file) as f:
-    lines = f.readlines()
-    
-for l in lines:
-    print '-----------------\n %s', l.rstrip('\n')
-    aum = AccessURLModel(l)
-    print aum.get_para_names()
 
+up = URLProcessor()
+access_log = CONST.WEBLOG_URLS
+up.get_access_url_params(access_log)
