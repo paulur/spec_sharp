@@ -26,10 +26,10 @@ class AccessURLModel(object):
             
         param_value_pairs    = self.query.split("&")
         
-        self.para_dict   = OrderedDict()
+        self.para_dict   = dict() #OrderedDict()
         for p in param_value_pairs:
             if "=" not in p: continue
-            print '\np:' + p
+#             print '\np:' + p
             param, value = p.split("=", 1)
             self.para_dict[param.strip()]=value.strip()
             
@@ -48,17 +48,24 @@ class URLProcessor(object):
         
         log_params_file = access_log + ".params"
         f_params  = open(log_params_file, "w")    
+        params_index = dict()
         try: 
             for l in lines:         
                 aum = AccessURLModel(l)
                 f_params.write('\n' + aum.method + '\t' + aum.path + ': ')
                 for pn in aum.get_param_names():
-                     f_params.write(pn + ', ')
+                    f_params.write(pn + ', ')
+                    params_index[pn]=''
         finally:
             f_params.close()
-            print 'params-written to: ' + log_params_file
+        print 'params-written to: ' + log_params_file
 
-
+        f_params_index = open( log_params_file + '.index', "w")
+        for i in params_index:
+            f_params_index.write(i + '\n')
+        
+        f_params_index.close   
+        
 up = URLProcessor()
 access_log = CONST.WEBLOG_URLS
 up.get_access_url_params(access_log)

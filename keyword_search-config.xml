@@ -6,9 +6,9 @@
     <password>abcd2015</password>
     <search-name>access-log-search</search-name>
     <search-stats></search-stats>
-    <search-time>earliest=-30m</search-time>
+    <search-time></search-time>
     <search-limit></search-limit>   
-    <search-keywords>host="web*p.prod.ch*.s.com"  source="/logs/ihs/sears2/2443/access"</search-keywords>
+    <search-keywords>host="mcpapp413p.prod.ch4.s.com" source="/appl/mcp-sal/jboss/server/sal4/log/access_log.2015-02-21"</search-keywords>
  
  <!--  
     <host>localhost</host>
