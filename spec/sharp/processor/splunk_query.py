@@ -54,6 +54,7 @@ class SplunkService(object):
         self.search(self.config.s_name, self.config.construct_search_string(), process_result)   
                 
     def search(self, search_name, search_string, process_result):
+        ''' process_result: the callback function to process the search result'''
         saved_searches = self.service.saved_searches
         try: 
             saved_search        = saved_searches[search_name]
@@ -67,8 +68,9 @@ class SplunkService(object):
         except KeyError:
             print "no search with name '%s' is found." % search_name
             saved_search = saved_searches.create(search_name, search_string)
-                            
+        
         print "search name: %s.\tsearch string: %s\n----" % (saved_search.name, saved_search.content.search)
+        
         job = saved_search.dispatch()
         
         while True:
@@ -79,7 +81,8 @@ class SplunkService(object):
         for result in results.ResultsReader(job.results(count=0)):
             if isinstance(result, dict):
 #                 print "Results raw: %s" % result['_raw']
-                print '.'
+#                 if __debug__: 
+#                     print '.'
                 if (process_result):
 #                     print "do-traverse-func:"
                     process_result(result)
@@ -132,7 +135,8 @@ class SplunkService(object):
         self.log_entries = []
         self.search_by_config(self.process_web_log_entry)
         f_urls  = open(CONST.WEBLOG_URLS, "w")
-        for u in service.urls:
+        for u in service.urls: 
+#             print u
             f_urls.write("%s\n" % u)
         self.urls    = []
         f_urls.close()

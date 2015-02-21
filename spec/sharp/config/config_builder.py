@@ -6,14 +6,14 @@ Created on Dec 16, 2014
 import xml.etree.ElementTree as ET   
 
 import splunklib.client as client
+from spec.sharp.CONST import CONST
 
 class KeywordSearchConfig(object):
     '''
     classdocs
     '''
     def __init__(self, host='', port='', user='', password='', \
-                 s_name='', s_keywords='', s_time='', \
-                 s_stats='', s_limit=''):
+                 s_name='', s_keywords='',  s_time='', s_limit=''):
         self.host       = host
         self.port       = port
         self.user       = user
@@ -21,15 +21,12 @@ class KeywordSearchConfig(object):
         self.s_name     = s_name
         self.s_keywords = s_keywords
         self.s_time     = s_time
-        self.s_stats    = s_stats
         self.s_limit    = s_limit    
             
     def construct_search_string(self):
         s_string = format(" %s ") % (self.s_keywords)
         if self.s_time:
-            s_string += format(" %s ") % self.s_time
-        if self.s_stats:
-            s_string += format(" %s ") % self.s_stats
+            s_string += format(" & %s ") % self.s_time
         if self.s_limit:
             s_string += format(" | %s") % self.s_limit
             
@@ -41,7 +38,6 @@ class KeywordSearchConfig(object):
                 '\nsearch-name: ' + self.s_name + \
                 '\nsearch-keywords: ' + self.s_keywords + \
                 '\nsearch-time: ' + self.s_time + \
-                '\nsearch-stats: ' + self.s_stats + \
                 '\nsearch-limit: ' + self.s_limit             
         
         
@@ -80,30 +76,33 @@ class ConfigBuilder(object):
                 s_keywords = text
             elif tag == 'search-time':
                 s_time = text
-            elif tag == 'search-stats':
-                s_stats = text
             elif tag == 'search-limit':
-                s_limit  = text
+                s_limit  = text                
             else :
                 '''do nothing'''                
             
-        return KeywordSearchConfig(host, port, user, password, s_name, s_keywords, s_time, s_stats, s_limit)
+        return KeywordSearchConfig(host, port, user, password, s_name, s_keywords, s_time, s_limit)
     
     def main(self):
         print 'hi: config'
     
         '''testing code'''
-        cb = ConfigBuilder("/home/paul/workspace/spec_sharp/keyword-search-config.xml")
+        cb = ConfigBuilder(CONST.KEYWORD_SERACH_CONFIG)
         config = cb.build_keyword_search_config()
         print config.__str__()
         
-        # Create a Service instance and log in 
-        service = client.connect(
-            host=config.host,
-            port=config.port,
-            username=config.user,
-            password=config.password)
+#         # Create a Service instance and log in 
+#         service = client.connect(
+#             host=config.host,
+#             port=config.port,
+#             username=config.user,
+#             password=config.password)
+#         
+#         # Print installed apps to the console to verify login
+#         for app in service.apps:
+#             print app.name 
+
+# cb = ConfigBuilder(CONST.KEYWORD_SERACH_CONFIG)
+# config = cb.build_keyword_search_config()
+# print config.construct_search_string()
         
-        # Print installed apps to the console to verify login
-        for app in service.apps:
-            print app.name 
