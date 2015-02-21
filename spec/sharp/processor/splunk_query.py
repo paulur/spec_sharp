@@ -152,7 +152,7 @@ class SplunkService(object):
          
 service = SplunkService(CONST.KEYWORD_SERACH_CONFIG)
 service.create_urls_entries_files()
-#testing
+#testing remove
 # service.search_by_config()
 # service.display_result(search_job)
 # service.delete_search("tmp")

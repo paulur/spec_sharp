@@ -2,6 +2,6 @@ keyword-search-config.xml
 *.pyc
 *.t
 *.txt
+*.xml
 .project
 .pydevproject
-.xml
