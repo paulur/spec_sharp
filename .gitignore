@@ -2,5 +2,6 @@
 *.t
 *.txt
 *.xml
+weblog-urls.*
 .project
 .pydevproject
