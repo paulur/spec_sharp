@@ -4,3 +4,4 @@ keyword-search-config.xml
 *.txt
 .project
 .pydevproject
+.xml
