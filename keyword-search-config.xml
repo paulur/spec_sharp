@@ -3,7 +3,7 @@
    <host>graphspl301p.prod.ch3.s.com</host>
     <port>8089</port>
     <user>wli001</user>
-    <password>abcd20/password>
+    <password>abcd2/password>
     <search-name>access-log-search</search-name>
     <search-stats></search-stats>
     <search-time></search-time>
