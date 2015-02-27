@@ -64,6 +64,7 @@ class URLProcessor(object):
         for i in params_index:
             f_params_index.write(i + '\n')
         
+        print 'param writtne to: ' + log_params_file + '.index'
         f_params_index.close   
         
 up = URLProcessor()

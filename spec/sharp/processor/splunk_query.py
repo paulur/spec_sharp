@@ -152,7 +152,10 @@ class SplunkService(object):
         self.log_entries.append(log_entry)
         
         url = re.findall('"([^"]*)"', log_entry)[0]
-        self.urls.append(url.split(' ')[0] + ' ' + url.split(' ')[1])
+        if ' ' in url: 
+            self.urls.append(url.split(' ')[0] + ' ' + url.split(' ')[1])
+        else:
+            print 'irregular url: ' + url
          
 service = SplunkService(CONST.KEYWORD_SERACH_CONFIG)
 service.create_urls_entries_files()
