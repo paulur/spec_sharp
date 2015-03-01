@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<splunk-conf>    
+   	<host>localhost/host>
+    <port>8089</port>
+    <user>admin</user>
+    <password>password</password>
+    <search-name>restful-log-search</search-name>
+    <search-keywords>method=*</search-keywords>
+    <search-time>earliest=-1h</search-time>
+    <search-limit>head111</search-limit>  
+</splunk-conf>
