@@ -5,7 +5,7 @@ Created on Dec 16, 2014
 '''
 import xml.etree.ElementTree as ET   
 
-import splunklib.client as client
+# import splunklib.client as client
 from spec.sharp.CONST import CONST
 
 class KeywordSearchConfig(object):

@@ -9,7 +9,7 @@ from time import sleep
 import splunklib.client as client
 import splunklib.results as results
 
-from spec.sharp.config.config_builder import ConfigBuilder
+from spec.sharp.config.splunk_config import ConfigBuilder
 from spec.sharp.CONST import CONST
 
 
