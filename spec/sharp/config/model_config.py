@@ -26,22 +26,20 @@ class ModelConfig(object):
     classdocs
     '''
 
-    def __init__(self, m_name='', m_loc='', m_desc='', l_type='', l_loc=''):
+    def __init__(self, m_name='', m_desc='', l_type='', l_file=''):
         '''
         Constructor
         '''
         self.model_name = m_name
-        self.model_loc  = m_loc
         self.model_desc = m_desc
         self.log_type   = l_type
-        self.log_loc    = l_loc
+        self.log_file    = l_file
         
     def __str__(self):
         return 'model_name: ' + self.model_name + \
-                '\nmodel_loc: ' + self.model_loc + \
                 '\nmodel_desc: ' + self.model_desc + \
                 '\nlog_type: ' + self.log_type + \
-                '\nlog_loc: ' + self.log_loc
+                '\nlog_file: ' + self.log_file
         
         
 class ModelConfigBuilder(object):
@@ -58,22 +56,18 @@ class ModelConfigBuilder(object):
             
             if tag == 'model-name':
                 m_name = text
-            elif tag == 'model-location':
-                _m_loc = text
-                '''replace $model_dir$ with real dir'''
-                m_loc = _m_loc.replace('$model_dir$', CONST.MODEL_DIR)
             elif tag == 'model-description':
                 m_desc = text
             elif tag == 'log-type':
                 l_type = text
-            elif tag == 'log-location':
+            elif tag == 'log-file':
                 _l_loc = text
                 '''replace $log_dir$ with real dir'''
-                l_loc = _l_loc.replace('$log_dir$', CONST.LOG_DIR)
+                l_loc = CONST.LOG_DIR + _l_loc
             else:
                 '''done'''
         
-        return ModelConfig(m_name, m_loc, m_desc, l_type, l_loc)
+        return ModelConfig(m_name, m_desc, l_type, l_loc)
                 
 
 mcb =  ModelConfigBuilder()
