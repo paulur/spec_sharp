@@ -15,3 +15,7 @@ class CONST(object):
     KEYWORD_SERACH_CONFIG   = LOG_DIR + "keyword-search-conf.xml"
     WEBLOG_ENTRIES          = MODEL_DIR + "weblog-entries.txt"
     WEBLOG_URLS             = ROOT_DIR + "weblog-urls.txt"
+
+
+    SECURE_HTTP_METHODS     = ['GET', 'POST', 'DELETE', 'POST', 'HEAD']
+    SENSITIVE_PARAM_NAMES   = ['PASSWORD', 'LASTNAME', 'PHONE', 'ADDRESS']
