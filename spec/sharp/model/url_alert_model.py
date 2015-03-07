@@ -5,6 +5,7 @@ Created on Mar 3, 2015
 '''
 import os
 import re
+import datetime
 
 from collections import OrderedDict
 
@@ -29,8 +30,13 @@ class URLModelItem(object):
 
 class URLItemParser(object):
     
-    def parseItem(self, l): 
+    def parse_item(self, l):
+        
+        '''16/Oct/2014:18:20:57''' 
         time    = l.split('[', 1)[1].split(']')[0]
+        formt_time = str(datetime.datetime.strptime(time, '%d/%b/%Y:%H:%M:%S'))
+        print 'format-time: ' + formt_time
+        
         request = re.findall('"([^"]*)"', l)[0]
         mu  = request.split(' ')
         method  = mu[0]
@@ -52,7 +58,9 @@ class URLItemParser(object):
 #         print time + ': ' + method + ':\t' + path + '\t' 
 #         print para_ordered_dict.keys()  
         
-        return URLModelItem(time, method, path, para_ordered_dict.keys())
+        url_item        = URLModelItem(formt_time, method, path, para_ordered_dict.keys())
+        nts_detector    = NTSDetector()
+        nts_detector.detect(url_item)
 
 class URLAlertTrainer(object):
     '''
@@ -82,17 +90,18 @@ class URLAlertTrainer(object):
             lines = f.readlines()
         
         u_parser    = URLItemParser()
-        detector    = URLAlertDetector()
+        detector    = TSDetector()
         for l in lines:
 #             print l + '\n\t'
-            item = u_parser.parseItem(l)
-#             print item
-            detector.detect(item)
-#             method_alert(item.method)
-#             path_alert(item.path)
-#             param_alert(item.params)
+            item = u_parser.parse_item(l)
+            todo: detector TSDetector
 
-class URLAlertDetector(object):
+class Detector(object):
+    def alert_report(self, report):
+        print 'ALERT: ' + report
+        
+class NTSDetector(Detector):
+    '''non time series model'''
     def detect(self, url_item):
         self.method_alert(url_item)
         self.param_alert(url_item)
@@ -109,17 +118,19 @@ class URLAlertDetector(object):
         for p in url_item.param_list:
             if self.sensitive_param(p):
                 self.alert_report('sensitive param name: ' + p + ' in request: ' + str(url_item))
-                
-        
-    def path_alert(self, path):
-        '''check if unseen path'''
-        
+           
     def sensitive_param(self, param):
         return param.upper() in CONST.SENSITIVE_PARAM_NAMES
     
-    def alert_report(self, alert):
-        print '!alert!: ' + alert
+class TSDetector(Detector):
+    '''time series model'''
+    
+    def unseen_path(self, url_item):
+        ''' check a path '''
         
+    def unsee_params(self, url_item):
+        ''' check params '''
+
 config_file = CONST.CONFIG_DIR + 'test-model.xml'
 uat = URLAlertTrainer(config_file)
 uat.train_model()
