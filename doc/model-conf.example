@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<conf>
+    <model-name>test-model</model-name>
+    <model-description>some description: testing web url alert model</model-description>
+    <log-type>web access log</log-type>
+    <log-file>weblog-entries.txt</log-file>   
+    
+    <!-- 
+    	182.236.164.11 - - [16/Oct/2014:18:20:58] "post /oldlink?itemId=EST-18&pAssWord=SD6SL8FF10ADFF53101 HTTP 1.1"
+    -->
+    <log-formatter>%- %- %- [%t] "%m %u %-</log-formatter>
+    
+    <!-- 
+    	16/Oct/2014:18:20:58
+    -->
+    <time-formatter>%d/%b/%Y:%H:%M:%S</time-formatter>
+</conf>
