@@ -155,29 +155,17 @@ class URLModelTrainer(object):
         self.model_config   = mcb.build_config(config_file)  
         model_directory     = CONST.MODEL_DIR + self.model_config.model_name
         if not os.path.isdir(model_directory):            
-            self.init_model_dir(model_directory)   
-            self.init_model_file(model_directory + '\\0.xml')
-    
-    def init_model_dir(self, model_directory):  
-        '''initialize the directory'''
+            self.init_model_repos(model_directory)   
+            
+    def init_model_repos(self, model_directory):
         print 'initial model dir: ' + model_directory
-        os.makedirs(model_directory)     
-    
-    def init_model_file(self, model_file):
-#         root = Element('model')           
-#         root.set('ts', str(datetime.datetime.now()))     
-#         comment = Comment('initial model. no data.')
-#         root.append(comment)
-        root = self.init_model_root('initial model. no data.')
-        self.prettify_to_file(root, model_file)
+        os.makedirs(model_directory)    
         
-    def init_model_root(self, comment):
         root  = ET.Element('model')
-        root.set('ts', str(datetime.datetime.now()))
-        comment_node = Comment(comment)
+        root.set('ts', str(datetime.datetime.utcnow()))
+        comment_node = Comment('initial model. no data.')
         root.append(comment_node)
-        
-        return root 
+        self.prettify_to_file(root, model_directory + '\\0.xml')
                 
     def prettify(self, elem):
         """Return a pretty-printed XML string for the Element.
@@ -209,7 +197,7 @@ class URLModelTrainer(object):
 #         print 'current current_model_file_name: ' + current_model_file_name
                 
         last_model_root     = ET.parse(latest_model_file_name).getroot()        
-        current_model_root  = self.init_model_root('updated model.')
+        current_model_root  = ET.Element('model')
         
         for log_entry in log_entries:            
             model_item      = u_parser.do_formatter_parser(log_entry, self.model_config.log_formatter, self.model_config.time_formatter)
@@ -219,7 +207,14 @@ class URLModelTrainer(object):
             nts_detector.detect(model_item, log_entry)
             self.update_model(model_item, last_model_root, current_model_root)
         
-        self.prettify_to_file(current_model_root, current_model_file_name)
+        pretty_last_model       = self.prettify(last_model_root)
+        pretty_current_mdoel    = self.prettify(current_model_root)
+        if pretty_current_mdoel != pretty_last_model:
+            print 'pretty_last_model: ' + pretty_last_model
+            print 'pretty_current_mdoel: ' + pretty_current_mdoel
+            self.prettify_to_file(current_model_root, current_model_file_name)
+        else:
+            print 'no update to the model.'
 
     def update_model(self, model_item, last_model_root, current_model_root):
         print 'udpate mdoe: last model root: \n' + tostring(last_model_root)
