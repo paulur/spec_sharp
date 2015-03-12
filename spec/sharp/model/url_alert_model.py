@@ -44,14 +44,14 @@ class URLModeltemParser(object):
         
         return URLModelItem(format_time, method, path, param_list)
     
-    def do_formatter_parser(self, l, log_formatter, time_formatter):
+    def do_formatter_parser(self, log_item, log_formatter, time_formatter):
         print '\n------\n do formatter parser....'        
 #         print 'log formatter: ' + log_formatter
 #         print 'time formatter: ' + time_formatter
         delimiter_list, format_string_pos = self.parse_log_format_string(log_formatter)
 #         print 'delimiter_list: ' + str(delimiter_list)
 #         print 'format string pos: ' + str(format_string_pos)        
-        tokens  = self.tokenize_log_item(l, delimiter_list)                      
+        tokens  = self.tokenize_log_item(log_item, delimiter_list)                      
         time    = tokens[format_string_pos['t']]
         method  = tokens[format_string_pos['m']]
         url     = tokens[format_string_pos['u']]
@@ -167,25 +167,22 @@ class URLModelTrainer(object):
         root.append(comment_node)
         self.prettify_to_file(root, model_directory + '\\0.xml')
                 
-    def prettify(self, elem):
+    def prettify_to_string(self, root):
         """Return a pretty-printed XML string for the Element.
         """
-        rough_string = ElementTree.tostring(elem, 'utf-8')
-        reparsed = minidom.parseString(rough_string)
-        return reparsed.toprettyxml(indent="  ")
+        xml_string = ElementTree.tostring(root, 'utf-8')
+        reparsed = minidom.parseString(xml_string)
+        return reparsed.toprettyxml(indent='\t')
     
     def prettify_to_file(self, elem, file): 
         with open (file, 'w') as mf :
-            mf.write(self.prettify(elem))
+            mf.write(self.prettify_to_string(elem))
             mf.close()
         
     def train_model(self):
         '''write the model'''
         with open(self.model_config.log_file) as f:
             log_entries = f.readlines()
-        
-        nts_detector    = NTSDetector()
-        u_parser        = URLModeltemParser()                             
                        
         '''model file name is the order of existing files in time series'''
         model_directory         = CONST.MODEL_DIR + self.model_config.model_name    
@@ -197,22 +194,28 @@ class URLModelTrainer(object):
 #         print 'current current_model_file_name: ' + current_model_file_name
                 
         last_model_root     = ET.parse(latest_model_file_name).getroot()        
-        current_model_root  = ET.Element('model')
+        current_model_root  = ET.parse(latest_model_file_name).getroot()
         
+        nts_detector    = NTSDetector()
+        ts_detector     = TSDetector()
+        
+        u_parser        = URLModeltemParser()  
         for log_entry in log_entries:            
             model_item      = u_parser.do_formatter_parser(log_entry, self.model_config.log_formatter, self.model_config.time_formatter)
             print 'log-entry: ' + log_entry + '\n\t'
             print 'model_item:\t' + str(model_item)
              
             nts_detector.detect(model_item, log_entry)
-            self.update_model(model_item, last_model_root, current_model_root)
+            ts_detector.detect(model_item, last_model_root, current_model_root, log_entry)
         
-        pretty_last_model       = self.prettify(last_model_root)
-        pretty_current_mdoel    = self.prettify(current_model_root)
+        pretty_last_model       = self.prettify_to_string(last_model_root)
+        pretty_current_mdoel    = self.prettify_to_string(current_model_root)
+        
         if pretty_current_mdoel != pretty_last_model:
-            print 'pretty_last_model: ' + pretty_last_model
-            print 'pretty_current_mdoel: ' + pretty_current_mdoel
+#             print 'pretty_last_model: ' + pretty_last_model
+#             print 'pretty_current_mdoel: ' + pretty_current_mdoel
             self.prettify_to_file(current_model_root, current_model_file_name)
+            print 'model is updated.'
         else:
             print 'no update to the model.'
 
@@ -227,35 +230,44 @@ class Detector(object):
         
 class NTSDetector(Detector):
     '''non time series model'''
-    def detect(self, model_item, log_item):
+    def detect(self, model_item, log_entry):
         print '****NTS dector***'
-        self.method_alert(model_item, log_item)
-        self.param_alert(model_item, log_item)
+        insecure_method = self.insecure_method_alert(model_item) 
+        if (insecure_method) :             
+            self.alert_report('insecure_method in log entry: ' + log_entry + '\n[' + insecure_method  + ']')
+            
+        sensitive_params = self.sensitive_param_alert(model_item)
+        if len(sensitive_params) :
+            self.alert_report('sensitive param names in log entry: ' + log_entry + '\n' + str(sensitive_params))
         
-    def method_alert(self, model_item, log_item):
-        '''check if insure method
-        '''
+    def insecure_method_alert(self, model_item):
+        '''check if insure method'''
         method = model_item.method.upper() 
         if method not in CONST.SECURE_HTTP_METHODS:
-            self.alert_report('insecure http method: ' + method + ' in log item : ' + log_item)
+            return method
     
-    def param_alert(self, model_item, log_item):
+    def sensitive_param_alert(self, model_item):
         '''check params'''
+        sensitive_params = []
         for p in model_item.param_list:
-            if self.sensitive_param(p):
-                self.alert_report('sensitive param name: ' + p + ' in log item : ' + log_item)
+            if p.upper() in CONST.SENSITIVE_PARAM_NAMES:
+                sensitive_params.append(p)
+                
+        return sensitive_params
            
-    def sensitive_param(self, param):
-        return param.upper() in CONST.SENSITIVE_PARAM_NAMES
     
 class TSDetector(Detector):
     '''time series model'''
-    
-    def unseen_path(self, url_item):
-        ''' check a path '''
+    def detect(self, model_item, last_model_root, current_model_root, log_entry):
+        print '***TS detector***'
         
-    def unsee_params(self, url_item):
-        ''' check params '''
+    
+    def unseen_path(self, url_item, last_model_root, current_model_root, log_entry):
+        ''' check a path '''
+        '''if new url: add new''' 
+        
+    def unsee_params(self, url_item, last_mode_root, current_model_root, log_entry):
+        '''check params'''
 
 # uip  = URLModeltemParser()
 # format_string = '%- %- %- [%t] "%m %u %-'

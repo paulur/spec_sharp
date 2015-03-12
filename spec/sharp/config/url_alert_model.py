@@ -8,8 +8,8 @@ URL Alert Model Format
 <model>
     <request>
         <method></method>
-        <path> </path>
-        <params first-seen=    last-seen= >
+        <path since=version> </path>
+        <params since=version last-appearance-time= >
             param-name-1, …, param-name-n
         </params>
      </request>
