@@ -6,6 +6,9 @@ Created on Mar 3, 2015
 import os
 import re
 import datetime
+from xml.etree.ElementTree import *
+from xml.etree import ElementTree
+from xml.dom import minidom
 
 from collections import OrderedDict
 
@@ -145,37 +148,82 @@ class URLModeltemParser(object):
         return path, param_list
     
 class URLModelTrainer(object):
+    
     def __init__(self, model_config_file):
         mcb                 = ModelConfigBuilder()
         config_file         = CONST.CONFIG_DIR + 'test-model.xml'
         self.model_config   = mcb.build_config(config_file)  
         model_directory     = CONST.MODEL_DIR + self.model_config.model_name
-        if os.path.isdir(model_directory):
-            print 'model dir existed at: ' + model_directory
-        else: 
-            print 'create  dir: ' + model_directory
-            os.makedirs(model_directory)
-        '''model file name is the order of existing files in time series'''
-        last_model_file_number          = len(os.listdir(model_directory))
-        self.latest_model_file_name     = CONST.MODEL_DIR + str(last_model_file_number) + '.xml'
-        self.model_file_name            = CONST.MODEL_DIR + str(last_model_file_number + 1) + '.xml'
-        print 'last model file: ' + self.latest_model_file_name
-        print 'model_file_name: ' + self.model_file_name
-
+        if not os.path.isdir(model_directory):            
+            self.init_model_dir(model_directory)   
+            self.init_model_file(model_directory + '\\0.xml')
+    
+    def init_model_dir(self, model_directory):  
+        '''initialize the directory'''
+        print 'initial model dir: ' + model_directory
+        os.makedirs(model_directory)     
+    
+    def init_model_file(self, model_file):
+#         root = Element('model')           
+#         root.set('ts', str(datetime.datetime.now()))     
+#         comment = Comment('initial model. no data.')
+#         root.append(comment)
+        root = self.init_model_root('initial model. no data.')
+        self.prettify_to_file(root, model_file)
+        
+    def init_model_root(self, comment):
+        root  = ET.Element('model')
+        root.set('ts', str(datetime.datetime.now()))
+        comment_node = Comment(comment)
+        root.append(comment_node)
+        
+        return root 
+                
+    def prettify(self, elem):
+        """Return a pretty-printed XML string for the Element.
+        """
+        rough_string = ElementTree.tostring(elem, 'utf-8')
+        reparsed = minidom.parseString(rough_string)
+        return reparsed.toprettyxml(indent="  ")
+    
+    def prettify_to_file(self, elem, file): 
+        with open (file, 'w') as mf :
+            mf.write(self.prettify(elem))
+            mf.close()
+        
     def train_model(self):
         '''write the model'''
         with open(self.model_config.log_file) as f:
             log_entries = f.readlines()
         
         nts_detector    = NTSDetector()
-        u_parser        = URLModeltemParser()
+        u_parser        = URLModeltemParser()                             
+                       
+        '''model file name is the order of existing files in time series'''
+        model_directory         = CONST.MODEL_DIR + self.model_config.model_name    
+        last_model_file_number  = len(os.listdir(model_directory))
+        latest_model_file_name  = model_directory + '\\' + str(last_model_file_number-1) + '.xml'
+        current_model_file_name = model_directory + '\\' + str(last_model_file_number) + '.xml'
+        
+#         print 'last model file: ' + latest_model_file_name
+#         print 'current current_model_file_name: ' + current_model_file_name
+                
+        last_model_root     = ET.parse(latest_model_file_name).getroot()        
+        current_model_root  = self.init_model_root('updated model.')
+        
         for log_entry in log_entries:            
             model_item      = u_parser.do_formatter_parser(log_entry, self.model_config.log_formatter, self.model_config.time_formatter)
             print 'log-entry: ' + log_entry + '\n\t'
             print 'model_item:\t' + str(model_item)
-            
+             
             nts_detector.detect(model_item, log_entry)
-#             todo: update model file w/ this model_item
+            self.update_model(model_item, last_model_root, current_model_root)
+        
+        self.prettify_to_file(current_model_root, current_model_file_name)
+
+    def update_model(self, model_item, last_model_root, current_model_root):
+        print 'udpate mdoe: last model root: \n' + tostring(last_model_root)
+        '''update the model'''    
 
 
 class Detector(object):
