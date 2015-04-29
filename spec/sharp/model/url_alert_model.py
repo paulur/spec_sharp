@@ -17,7 +17,12 @@ from spec.sharp.config.model_config import *
 
 class URLModelItem(object):        
     def __init__(self, t='', m='', p='', pl=[]):
-        '''constructor'''
+        '''constructor
+            timestamp
+            method
+            path
+            parameter list
+        '''
         self.timestamp  = t
         self.method     = m
         self.path       = p
@@ -44,11 +49,14 @@ class URLModeltemParser(object):
         
         return URLModelItem(format_time, method, path, param_list)
     
-    def do_formatter_parser(self, log_item, log_formatter, time_formatter):
+    def format_parse(self, log_item, log_formatter, time_formatter):
+        '''
+        parse a log entry into a model item for contsturing the model
+        '''
         print '\n------\n do formatter parser....'        
 #         print 'log formatter: ' + log_formatter
 #         print 'time formatter: ' + time_formatter
-        delimiter_list, format_string_pos = self.parse_log_format_string(log_formatter)
+        delimiter_list, format_string_pos = self.do_format_parse(log_formatter)
 #         print 'delimiter_list: ' + str(delimiter_list)
 #         print 'format string pos: ' + str(format_string_pos)        
         tokens  = self.tokenize_log_item(log_item, delimiter_list)                      
@@ -67,7 +75,7 @@ class URLModeltemParser(object):
         
         return URLModelItem(format_time, method, path, param_list)
                 
-    def parse_log_format_string(self, format_string):        
+    def do_format_parse(self, format_string):        
         ''' log format string:
             %m        method
             %u        url, including query
@@ -151,7 +159,7 @@ class URLModelTrainer(object):
     
     def __init__(self, model_config_file):
         mcb                 = ModelConfigBuilder()
-        config_file         = CONST.CONFIG_DIR + 'test-model.xml'
+        config_file         = model_config_file #CONST.CONFIG_DIR + 'test-model.xml'
         self.model_config   = mcb.build_config(config_file)  
         model_directory     = CONST.MODEL_DIR + self.model_config.model_name
         if not os.path.isdir(model_directory):            
@@ -162,7 +170,7 @@ class URLModelTrainer(object):
         os.makedirs(model_directory)    
         
         root  = ET.Element('model')
-        root.set('ts', str(datetime.datetime.utcnow()))
+        root.set('ini_ts', str(datetime.datetime.utcnow()))
         comment_node = Comment('initial model. no data.')
         root.append(comment_node)
         self.prettify_to_file(root, model_directory + '\\0.xml')
@@ -171,9 +179,10 @@ class URLModelTrainer(object):
         """Return a pretty-printed XML string for the Element.
         """
         xml_string = ElementTree.tostring(root, 'utf-8')
-        reparsed = minidom.parseString(xml_string)
-        return reparsed.toprettyxml(indent='\t')
-    
+        return xml_string
+#         reparsed = minidom.parseString(xml_string)
+#         return reparsed.toprettyxml(indent='\t')
+        
     def prettify_to_file(self, elem, file): 
         with open (file, 'w') as mf :
             mf.write(self.prettify_to_string(elem))
@@ -198,30 +207,35 @@ class URLModelTrainer(object):
         
         nts_detector    = NTSDetector()
         ts_detector     = TSDetector()
-        
+    
         u_parser        = URLModeltemParser()  
         for log_entry in log_entries:            
-            model_item      = u_parser.do_formatter_parser(log_entry, self.model_config.log_formatter, self.model_config.time_formatter)
+            model_item      = u_parser.format_parse(log_entry, self.model_config.log_formatter, self.model_config.time_formatter)
             print 'log-entry: ' + log_entry + '\n\t'
             print 'model_item:\t' + str(model_item)
-             
-            nts_detector.detect(model_item, log_entry)
-            ts_detector.detect(model_item, last_model_root, current_model_root, log_entry)
+            
+            #detector also update the model 
+#             nts_detector.detect(model_item, log_entry)
+            ts_detector.detect(model_item, current_model_root, log_entry)
         
         pretty_last_model       = self.prettify_to_string(last_model_root)
         pretty_current_mdoel    = self.prettify_to_string(current_model_root)
+        
+        print 'current mode xml: ', pretty_current_mdoel
+       
         
         if pretty_current_mdoel != pretty_last_model:
 #             print 'pretty_last_model: ' + pretty_last_model
 #             print 'pretty_current_mdoel: ' + pretty_current_mdoel
             self.prettify_to_file(current_model_root, current_model_file_name)
             print 'model is updated.'
-        else:
+        else: 
+            '''no change of the model'''
             print 'no update to the model.'
 
-    def update_model(self, model_item, last_model_root, current_model_root):
-        print 'udpate mdoe: last model root: \n' + tostring(last_model_root)
-        '''update the model'''    
+#     def update_model(self, model_item, last_model_root, current_model_root):
+#         print 'udpate mdoe: last model root: \n' + tostring(last_model_root)
+#         '''update the model'''    
 
 
 class Detector(object):
@@ -258,21 +272,81 @@ class NTSDetector(Detector):
     
 class TSDetector(Detector):
     '''time series model'''
-    def detect(self, model_item, last_model_root, current_model_root, log_entry):
+    def detect(self, model_item, model_root, log_entry):
+        '''
+        model_item: parse model item from log entry
+        current_model_root: ElementTree_root        the xml root of the model to build
+        log_entry: the orignal log entry
+        '''
         print '***TS detector***'
+        print 'ts detector for item :' + model_item.__str__()
         
+        is_request_existed = 0                
+        for r_node in model_root.iter('request'):
+            node_method  = r_node.get('method')
+            node_path    = r_node.get('path')
+            print 'in the model: method ', node_method, ' path ', node_path
+            print 'in the new item to check: method ', model_item.method, ' path ', model_item.path
+            
+            item_method     = model_item.method
+            item_path       = model_item.path
+            item_param_list = self.list_string(model_item.param_list)
+            
+            if node_method == item_method and node_path == item_path:
+                is_request_existed = 1
+                print 'no need add new request_node'    
+                
+                if  not item_param_list:
+                    break 
+                '''consider add empty param placeholder, if needed'''
+                    
+                is_param_list_existed = 0               
+                      
+                for p_node in r_node.iter('param-list'):
+                    model_p_list = p_node.text
+                    if item_param_list == model_p_list:
+                        print 'p_list in the model: ', model_p_list
+                        is_param_list_existed = 1          
+                
+                if not is_param_list_existed:
+                    print 'need add a param-lsit node: ', item_param_list
+                    param_list      = SubElement(r_node, 'param-list')
+                    param_list.text = self.list_string(item_param_list)
+                
+        if not is_request_existed:    
+            print 'need add new a request node'
+            self.add_request_node(model_root, model_item)
+                    
+    def list_string(self, list):
+#             list_str = ''
+#             for l in list:
+#                 list_str +=l.strip()
+#                 list_str +=','
+#             
+#             return list_str[:-1]
+        return ','.join(list) 
     
-    def unseen_path(self, url_item, last_model_root, current_model_root, log_entry):
+    def add_request_node(self, parent, model_item):
+            request = SubElement(parent, 'request', {'path': model_item.path, 'method': model_item.method})
+            if model_item.param_list:
+                param_list  = SubElement(request, 'param-list')
+                param_list.text = self.list_string(model_item.param_list)
+                print 'add request node with param-list:', param_list.text
+            
+    def unseen_path(self, url_item, current_model_root, log_entry):
+#         TODO
         ''' check a path '''
-        '''if new url: add new''' 
+        '''if new url: add the url to the new model''' 
         
-    def unsee_params(self, url_item, last_mode_root, current_model_root, log_entry):
+    def unsee_params(self, url_item, current_model_root, log_entry):
+#         TODO
         '''check params'''
+        ''' if a new params: add the params to the path of existing path'''
 
 # uip  = URLModeltemParser()
 # format_string = '%- %- %- [%t] "%m %u %-'
 # log_item = '182.236.164.11 - - [16/Oct/2014:18:20:58] "post /oldlink?itemId=EST-18&pAssWord=SD6SL8FF10ADFF53101 HTTP 1.1" 408 893 "http://www.buttercupgames.com/product.screen?productId=SF-BVS-G01" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.46 Safari/536.5" 134'
-# uip.do_formatter_parser(log_item, format_string)
+# uip.format_parse(log_item, format_string)
 
 
 config_file = CONST.CONFIG_DIR + 'test-model.xml'
