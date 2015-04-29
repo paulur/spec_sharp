@@ -26,6 +26,9 @@ class URLModelItem(object):
         self.timestamp  = t
         self.method     = m
         self.path       = p
+        if not len(pl) :                    
+            pl.append(CONST.SPEC_SHARP_NULL) 
+            
         self.param_list = pl
        
     def __str__(self):
@@ -152,7 +155,8 @@ class URLModeltemParser(object):
 #         print para_ordered_dict.keys()  
     
         param_list = para_ordered_dict.keys()
-        
+
+            
         return path, param_list
     
 class URLModelTrainer(object):
@@ -311,7 +315,7 @@ class TSDetector(Detector):
                 if not is_param_list_existed:
                     print 'need add a param-lsit node: ', item_param_list
                     param_list      = SubElement(r_node, 'param-list')
-                    param_list.text = self.list_string(item_param_list)
+                    param_list.text = item_param_list
                 
         if not is_request_existed:    
             print 'need add new a request node'

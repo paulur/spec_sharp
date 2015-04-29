@@ -19,3 +19,5 @@ class CONST(object):
 
     SECURE_HTTP_METHODS     = ['GET', 'POST', 'DELETE', 'POST', 'HEAD']
     SENSITIVE_PARAM_NAMES   = ['PASSWORD', 'LASTNAME', 'PHONE', 'ADDRESS']
+    
+    SPEC_SHARP_NULL         = 'spec-sharp-null'
