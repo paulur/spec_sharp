@@ -202,12 +202,16 @@ class URLModelTrainer(object):
         last_model_file_number  = len(os.listdir(model_directory))
         latest_model_file_name  = model_directory + '\\' + str(last_model_file_number-1) + '.xml'
         current_model_file_name = model_directory + '\\' + str(last_model_file_number) + '.xml'
+        reprot_file_name        = CONST.REPORT_DIR + self.model_config.model_name + '-rpt.xml'
         
 #         print 'last model file: ' + latest_model_file_name
 #         print 'current current_model_file_name: ' + current_model_file_name
                 
         last_model_root     = ET.parse(latest_model_file_name).getroot()        
         current_model_root  = ET.parse(latest_model_file_name).getroot()
+        report_root         = Element('report')
+        report_root.set('report_ts', str(datetime.datetime.utcnow()))
+        report_root.set('model-name', self.model_config.model_name )
         
         nts_detector    = NTSDetector()
         ts_detector     = TSDetector()
@@ -220,7 +224,7 @@ class URLModelTrainer(object):
             
             #detector also update the model 
 #             nts_detector.detect(model_item, log_entry)
-            ts_detector.detect(model_item, current_model_root, log_entry)
+            ts_detector.detect(model_item, current_model_root, log_entry, report_root)
         
         pretty_last_model       = self.prettify_to_string(last_model_root)
         pretty_current_mdoel    = self.prettify_to_string(current_model_root)
@@ -232,10 +236,13 @@ class URLModelTrainer(object):
 #             print 'pretty_last_model: ' + pretty_last_model
 #             print 'pretty_current_mdoel: ' + pretty_current_mdoel
             self.prettify_to_file(current_model_root, current_model_file_name)
+            self.prettify_to_file(report_root, reprot_file_name)
             print 'model is updated.'
         else: 
             '''no change of the model'''
             print 'no update to the model.'
+        
+        
 
 #     def update_model(self, model_item, last_model_root, current_model_root):
 #         print 'udpate mdoe: last model root: \n' + tostring(last_model_root)
@@ -245,6 +252,13 @@ class URLModelTrainer(object):
 class Detector(object):
     def alert_report(self, report):
         print 'ALERT: ' + report
+        
+    def report_alert(self, report_root, alert_type, alert_detail, orignal_request):
+        alert_node  = SubElement(report_root, 'alert', {'type': alert_type})
+        detail_node         = SubElement(alert_node, 'detail')
+        detail_node.text    = alert_detail
+        request_node        = SubElement(alert_node, 'original-request')
+        request_node.text   = orignal_request.__str__()
         
 class NTSDetector(Detector):
     '''non time series model'''
@@ -276,7 +290,7 @@ class NTSDetector(Detector):
     
 class TSDetector(Detector):
     '''time series model'''
-    def detect(self, model_item, model_root, log_entry):
+    def detect(self, model_item, model_root, log_entry, report_root):
         '''
         model_item: parse model item from log entry
         current_model_root: ElementTree_root        the xml root of the model to build
@@ -313,12 +327,14 @@ class TSDetector(Detector):
                         is_param_list_existed = 1          
                 
                 if not is_param_list_existed:
-                    print 'need add a param-lsit node: ', item_param_list
+#                     self.alert_report('Detected: a new param-lsit: ' + model_item.__str__())
+                    self.report_alert(report_root, CONST.ALERT_UNSEEN_PARAMS, 'param-list not seen', log_entry.__str__())
                     param_list      = SubElement(r_node, 'param-list')
                     param_list.text = item_param_list
                 
         if not is_request_existed:    
-            print 'need add new a request node'
+            print 'Detected: a new request: ', model_item.__str__()
+            self.report_alert(report_root, CONST.ALERT_UNSEEN_PATH, 'request path not seen', log_entry.__str__())
             self.add_request_node(model_root, model_item)
                     
     def list_string(self, list):
