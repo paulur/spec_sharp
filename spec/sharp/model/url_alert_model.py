@@ -178,10 +178,26 @@ class URLModelTrainer(object):
         comment_node = Comment('initial model. no data.')
         root.append(comment_node)
         self.prettify_to_file(root, model_directory + '\\0.xml')
-                
+    
+    def indent(self, elem, level=0):
+        i = "\n" + level*"  "
+        if len(elem):
+            if not elem.text or not elem.text.strip():
+                elem.text = i + "  "
+            if not elem.tail or not elem.tail.strip():
+                elem.tail = i
+            for elem in elem:
+                self.indent(elem, level+1) 
+            if not elem.tail or not elem.tail.strip():
+                elem.tail = i
+        else:
+            if level and (not elem.tail or not elem.tail.strip()):
+                elem.tail = i
+                        
     def prettify_to_string(self, root):
         """Return a pretty-printed XML string for the Element.
         """
+        self.indent(root)
         xml_string = ElementTree.tostring(root, 'utf-8')
         return xml_string
 #         reparsed = minidom.parseString(xml_string)
@@ -202,7 +218,9 @@ class URLModelTrainer(object):
         last_model_file_number  = len(os.listdir(model_directory))
         latest_model_file_name  = model_directory + '\\' + str(last_model_file_number-1) + '.xml'
         current_model_file_name = model_directory + '\\' + str(last_model_file_number) + '.xml'
-        reprot_file_name        = CONST.REPORT_DIR + self.model_config.model_name + '-rpt.xml'
+        report_timestamp        = str(datetime.datetime.utcnow())
+        reprot_file_name        = CONST.REPORT_DIR + self.model_config.model_name + '-report-' + report_timestamp.replace(':', '.').replace(' ', '.') + '.xml'
+        
         
 #         print 'last model file: ' + latest_model_file_name
 #         print 'current current_model_file_name: ' + current_model_file_name
@@ -210,7 +228,7 @@ class URLModelTrainer(object):
         last_model_root     = ET.parse(latest_model_file_name).getroot()        
         current_model_root  = ET.parse(latest_model_file_name).getroot()
         report_root         = Element('report')
-        report_root.set('report_ts', str(datetime.datetime.utcnow()))
+        report_root.set('report_ts', report_timestamp)
         report_root.set('model-name', self.model_config.model_name )
         
         nts_detector    = NTSDetector()
